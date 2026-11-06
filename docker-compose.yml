@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+
+  rabbitmq:
+      image: "rabbitmq:3-management" # The 'management' tag includes a visual web UI
+      container_name: rabbitmq-broker
+      ports:
+        - "5672:5672"   # AMQP protocol port (used by FastAPI)
+        - "15672:15672" # Management UI port (used by your browser)
+      environment:
+        - RABBITMQ_DEFAULT_USER=guest
+        - RABBITMQ_DEFAULT_PASS=guest
+
+  telemetry-consumer:
+    build:
+      context: "./TelemetryConsumer service"
+      dockerfile: Dockerfile
+    container_name: telemetry-consumer-app
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mounts your local code to the container for live-reloading
+      - "./TelemetryConsumer service:/app"
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - rabbitmq
