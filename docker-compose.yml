@@ -12,13 +12,13 @@ services:
         - RABBITMQ_DEFAULT_USER=guest
         - RABBITMQ_DEFAULT_PASS=guest
 
-cassandra:
-    image: "cassandra:latest"
-    container_name: cassandra-db
-    ports:
-      - "9042:9042" # Native Cassandra CQL port
-    environment:
-      - CASSANDRA_CLUSTER_NAME=TelemetryCluster
+  cassandra:
+      image: "cassandra:latest"
+      container_name: cassandra-db
+      ports:
+        - "9042:9042" # Native Cassandra CQL port
+      environment:
+        - CASSANDRA_CLUSTER_NAME=TelemetryCluster
 
   telemetry-consumer:
     build:
