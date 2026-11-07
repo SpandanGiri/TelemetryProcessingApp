@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 logging.basicConfig(level=logging.DEBUG)
 
 @asynccontextmanager
-async def lifespan():
+async def lifespan(app: FastAPI):
     global mq_connection,mq_channel
 
     try:
@@ -36,10 +36,23 @@ def healthCheck():
 
 @app.post("/ingest")
 async def ingestTelemetry(body:TelemetryIngestionBody):
-    user_id = body.user_id
-    model_name = body.model_name
 
-    response = f"{user_id} using {model_name}"
+    global mq_channel
     
-    return response
+    payload_json = body.model_dump_json()
+
+    if mq_channel:
+        await mq_channel.default_exchange.publish(
+                    aio_pika.Message(
+                        body=payload_json.encode(),
+                        delivery_mode=aio_pika.DeliveryMode.PERSISTENT
+                    ),
+                    routing_key="telemetry_queue"
+                )
+        logging.debug(f"Published to RabbitMQ: {body.user_id} using {body.model_name}")
+    else:
+            logging.error("Could not publish: RabbitMQ channel is not available")
+
+    return {"status": "accepted", "user": body.user_id, "model": body.model_name}
+
 
